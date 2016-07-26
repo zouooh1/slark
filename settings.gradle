@@ -1,1 +1,1 @@
-include ':app', ':slark_lib'
+include ':app', ':slark-lib'
