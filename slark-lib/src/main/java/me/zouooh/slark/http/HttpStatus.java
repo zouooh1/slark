@@ -1,4 +1,4 @@
-package me.zouooh.slark;
+package me.zouooh.slark.http;
 
 
 public interface HttpStatus {

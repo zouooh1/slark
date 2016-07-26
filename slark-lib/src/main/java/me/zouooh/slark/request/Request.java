@@ -2,6 +2,7 @@ package me.zouooh.slark.request;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URL;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,6 +14,12 @@ import com.inttus.BurroDebug;
 import com.inttus.ants.Network.OnNetworkResponse;
 import com.inttus.ants.impl.DefaultRetryPolicy;
 import com.inttus.ants.tool.Record;
+
+import me.zouooh.slark.http.Network;
+import me.zouooh.slark.response.Progress;
+import me.zouooh.slark.response.Response;
+import me.zouooh.slark.task.impl.SlarkQueue;
+import me.zouooh.slark.task.Task;
 
 public abstract class Request implements OnNetworkResponse{
 	
@@ -27,19 +34,19 @@ public abstract class Request implements OnNetworkResponse{
 		int PATCH = 7;
 	}
 	
-	private static final String DEFAULT_PARAMS_ENCODING = "UTF-8";
+	public static final String DEFAULT_PARAMS_ENCODING = "UTF-8";
 	
-	private String url;
+	private URL url;
 	private int method;
 	private Network network;
 	private Progress progress;
 	private Response<?> response;
 	private Task task;
-	private AntsQueue antsQueue;
-	
+	private SlarkQueue slarkQueue;
+
 	protected HashMap<String, String> params;
 	protected HashMap<String, String> headers;
-	
+
 	private boolean ok = false;
 	private boolean process = false;
 	private boolean pause = false;

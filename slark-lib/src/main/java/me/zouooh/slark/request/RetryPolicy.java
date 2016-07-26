@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-package me.zouooh.slark;
+package me.zouooh.slark.request;
 
+
+import me.zouooh.slark.SlarkException;
 
 public interface RetryPolicy {
 
