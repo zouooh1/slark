@@ -1,8 +1,12 @@
 package me.zouooh.slark.request;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.HashMap;
+import java.util.Map;
 
 import me.zouooh.slark.DataSource;
 import me.zouooh.slark.Logs;
@@ -115,6 +119,25 @@ public abstract class Request implements RequestConfig {
         return canceled;
     }
 
+    public final int getTimeoutMs() {
+        if (getRetryPolicy() != null){
+            return getRetryPolicy().getCurrentTimeout();
+        }
+        return DEFAULT_TIMES_OUT;
+    }
+
+    public String getBodyContentType() {
+        return "application/x-www-form-urlencoded; charset=" + getParamsEncoding();
+    }
+
+    public String getParamsEncoding() {
+        return DEFAULT_PARAMS_ENCODING;
+    }
+
+    public HashMap<String,String> getHeaders() {
+        return headers;
+    }
+
     public interface Method {
         int GET = 0;
         int POST = 1;
@@ -127,6 +150,7 @@ public abstract class Request implements RequestConfig {
     }
 
     public static final String DEFAULT_PARAMS_ENCODING = "UTF-8";
+    public static final int DEFAULT_TIMES_OUT = 3000;
 
     private String url;
     protected URL requestURL;
@@ -141,6 +165,7 @@ public abstract class Request implements RequestConfig {
 
     protected HashMap<String, String> params;
     protected HashMap<String, String> headers;
+    protected HashMap<String, FormFileItem> files;
 
     private boolean lock = false;
     private boolean process = false;
@@ -270,5 +295,36 @@ public abstract class Request implements RequestConfig {
             task.stop();
             task = null;
         }
+    }
+
+    public byte[] getBody()  {
+
+        if (params != null && params.size() > 0) {
+            return encodeParameters(params, getParamsEncoding());
+        }
+        return null;
+    }
+
+    private byte[] encodeParameters(Map<String, String> params, String paramsEncoding) {
+        StringBuilder encodedParams = new StringBuilder();
+        try {
+            for (Map.Entry<String, String> entry : params.entrySet()) {
+                encodedParams.append(URLEncoder.encode(entry.getKey(), paramsEncoding));
+                encodedParams.append('=');
+                encodedParams.append(URLEncoder.encode(entry.getValue(), paramsEncoding));
+                encodedParams.append('&');
+            }
+            return encodedParams.toString().getBytes(paramsEncoding);
+        } catch (UnsupportedEncodingException uee) {
+            throw new RuntimeException("Encoding not supported: " + paramsEncoding, uee);
+        }
+    }
+
+    public boolean hasFile(){
+        return files == null&&files.size() > 0;
+    }
+
+    public void sendData(DataOutputStream out)
+            throws UnsupportedEncodingException, IOException{
     }
 }
