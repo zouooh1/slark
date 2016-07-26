@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
+import me.zouooh.slark.Slark;
 import me.zouooh.slark.request.Request;
 import me.zouooh.slark.task.CacheworkFactory;
 import me.zouooh.slark.task.ContextHolder;
@@ -18,7 +19,7 @@ import me.zouooh.slark.task.TaskFactory;
  * @author zouooh
  * 
  */
-public class SlarkQueue implements Task.TaskLisnter,Queue{
+public class SlarkQueue implements Queue{
 	protected ContextHolder contextHolder;
 	protected ExecutorService executorService;
 	protected TaskFactory taskFactory;
@@ -36,7 +37,7 @@ public class SlarkQueue implements Task.TaskLisnter,Queue{
 	}
 
 	@Override
-	public ContextHolder contexHolder() {
+	public ContextHolder contextHolder() {
 		return contextHolder;
 	}
 
@@ -141,6 +142,9 @@ public class SlarkQueue implements Task.TaskLisnter,Queue{
 				contextHolder = null;
 			}
 			executorService = null;
+			if (requests == null){
+				return;
+			}
 			for (Request request : requests) {
 				request.destroy();
 			}
