@@ -1,15 +1,16 @@
 package me.zouooh.slark.task.impl;
 
-import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
-import android.content.Context;
-import android.os.Build;
-import me.zouooh.slark.http.Network;
 import me.zouooh.slark.request.Request;
+import me.zouooh.slark.task.CacheworkFactory;
+import me.zouooh.slark.task.ContextHolder;
+import me.zouooh.slark.task.NetworkFactory;
+import me.zouooh.slark.task.Queue;
 import me.zouooh.slark.task.Task;
+import me.zouooh.slark.task.TaskFactory;
 
 /**
  * 请求队列
@@ -17,89 +18,75 @@ import me.zouooh.slark.task.Task;
  * @author zouooh
  * 
  */
-public class SlarkQueue
-		implements Task.TaskLisnter {
-	private ExecutorService executor = null;
-	private Context context;
-	private File baseFile;
-	private Network network = null;
-	private String host;
-	private String fileHost;
-	private List<Request> requests = new LinkedList<Request>();
+public class SlarkQueue implements Task.TaskLisnter,Queue{
+	protected ContextHolder contextHolder;
+	protected ExecutorService executorService;
+	protected TaskFactory taskFactory;
+	protected NetworkFactory networkFactory;
+	protected CacheworkFactory cacheworkFactory;
+	private List<Request> requests = new LinkedList<>();
 	private boolean resume = false;
 
-	public SlarkQueue(Context context) {
-		this.context = context;
+	public SlarkQueue(ContextHolder contextHolder,ExecutorService executorService,TaskFactory taskFactory,NetworkFactory networkFactory,CacheworkFactory cacheworkFactory) {
+		this.contextHolder = contextHolder;
+		this.executorService = executorService;
+		this.taskFactory = taskFactory;
+		this.networkFactory = networkFactory;
+		this.cacheworkFactory = cacheworkFactory;
 	}
 
-	public ExecutorService getExecutor() {
-		return executor;
+	@Override
+	public ContextHolder contexHolder() {
+		return contextHolder;
 	}
 
-	/**
-	 * 设置线程组<br>
-	 * 如果为空，会使用默认线程组。
-	 * 
-	 * @param executor
-	 */
-	public void setExecutor(ExecutorService executor) {
-		this.executor = executor;
+	@Override
+	public Request get(String path){
+		return  null;
+	}
+	@Override
+	public Request post(String path){
+		return  null;
 	}
 
-	/**
-	 * 执行一个请求
-	 * 
-	 * @param antsRequest
-	 * @param isDelegate
-	 * @return
-	 */
-	public void executeTask(Request request) {
-		if (this.executor == null || request == null) {
+	@Override
+	public void fillRequest(Request request){
+		if (request == null){
+			return;
+		}
+		request.setQueue(this);
+		if (cacheworkFactory != null){
+			request.cachework(cacheworkFactory.buildCachework(request));
+		}
+		if (networkFactory != null){
+			request.network(networkFactory.buildNetwork(request));
+		}
+	}
+
+	public void executeRequest(Request request) {
+		if (this.executorService == null || request == null) {
 			return;
 		}
 		submitTask(request, false);
 		executeTaskBack(request);
 	}
 
-	/**
-	 * 执行一个请求
-	 * 
-	 * @param antsRequest
-	 * @param isDelegate
-	 * @return
-	 */
-	public void executeTaskBack(Request request) {
-		if (this.executor == null || request == null) {
+
+	private void executeTaskBack(Request request) {
+		if (this.executorService == null || request == null||taskFactory == null) {
 			return;
 		}
-		SlarkTask antsTask = new SlarkTask(request, this);
-		request.setTask(antsTask);
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-			antsTask.executeOnExecutor(executor);
-		} else {
-			antsTask.execute();
-		}
+		Task task = taskFactory.buildTask(request);
+		request.setTask(task);
+		task.executeOnExecutor(executorService);
 	}
 
-	/**
-	 * 添加一个请求，不会立即执行。
-	 * 
-	 * @param b
-	 * 
-	 * @param antsRequest
-	 */
-	public void submitTask(Request request) {
+	@Override
+	public void submitRequest(Request request) {
 		submitTask(request, true);
 	}
 
-	/**
-	 * 添加一个请求，不会立即执行。
-	 * 
-	 * @param b
-	 * 
-	 * @param antsRequest
-	 */
-	public void submitTask(Request request, boolean b) {
+	private void submitTask(Request request, boolean b) {
 		synchronized (this) {
 			if (requests == null) {
 				return;
@@ -109,12 +96,13 @@ public class SlarkQueue
 			}
 			if (b) {
 				if (resume) {
-					request.requestOnAntsQueue(this);
+					request.request();
 				}
 			}
 		}
 	}
 
+	@Override
 	public void destory(Request request) {
 		synchronized (this) {
 			request.pause();
@@ -126,25 +114,16 @@ public class SlarkQueue
 		}
 	}
 
-	/**
-	 * 生命期，重新开始<br>
-	 * 队列里的请求如果需要，会重新执行一次。<br>
-	 * 配合onResume();
-	 */
+	@Override
 	public void resume() {
 		synchronized (this) {
 			resume = true;
 			for (Request request : requests) {
-				request.requestOnAntsQueue(this);
+				request.request();
 			}
 		}
 	}
-
-	/**
-	 * 生命期，暂停<br>
-	 * 队列里未完成的请求全部暂停。<br>
-	 * 配合onPause();
-	 */
+	@Override
 	public void pause() {
 		synchronized (this) {
 			resume = false;
@@ -154,32 +133,26 @@ public class SlarkQueue
 		}
 	}
 
-	/**
-	 * 生命期，释放<br>
-	 * 队列里所有的请求清空。该队列不可再重新使用<br>
-	 * 配合onPause();
-	 */
-	public void destory() {
+	@Override
+	public void destroy() {
 		synchronized (this) {
+			if (contextHolder != null){
+				contextHolder.release();
+				contextHolder = null;
+			}
+			executorService = null;
 			for (Request request : requests) {
 				request.destroy();
 			}
 			requests.clear();
 			requests = null;
-			executor = null;
 		}
 	}
 
-	/**
-	 * 不可手动调用
-	 */
 	@Override
 	public void onStart(Request request) {
 	}
 
-	/**
-	 * 不可手动调用
-	 */
 	@Override
 	public void onEnd(Request request) {
 		synchronized (this) {
@@ -189,64 +162,12 @@ public class SlarkQueue
 			if (requests == null) {
 				return;
 			}
+			if (request.isPause()){
+				return;
+			}
 			if (requests.contains(request)) {
 				requests.remove(request);
 			}
 		}
 	}
-
-	public Network getNetwork() {
-		if (network == null) {
-			network = new UrlNetwork();
-		}
-		return network;
-	}
-
-	public void setNetwork(Network network) {
-		this.network = network;
-	}
-
-	public File baseDir() {
-		if (baseFile == null) {
-			baseFile = AppUtils.getExternalCacheDir(getContext());
-			if (baseFile != null && !baseFile.exists()) {
-				if (!baseFile.mkdirs()) {
-					baseFile = getContext().getCacheDir();
-				}
-			}
-		}
-		return baseFile;
-	}
-
-	public String getHost() {
-		return host;
-	}
-
-	public void setHost(String host) {
-		this.host = host;
-	}
-
-	public Context getContext() {
-		return context;
-	}
-
-	public String getFileHost() {
-		return fileHost;
-	}
-
-	public void setFileHost(String fileHost) {
-		this.fileHost = fileHost;
-	}
-
-	public CookieStore getCookieStore() {
-		if (cookieStore == null) {
-			cookieStore = new CookieStore(getContext());
-		}
-		return cookieStore;
-	}
-
-	public void setCookieStore(CookieStore cookieStore) {
-		this.cookieStore = cookieStore;
-	}
-
 }

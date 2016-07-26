@@ -1,5 +1,8 @@
 package me.zouooh.slark.task;
 
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+
 import me.zouooh.slark.request.Request;
 
 /**
@@ -17,14 +20,7 @@ public interface Task{
 	int STATE_SUCCESS = 3;
 	int STATE_FAILURE = 4;
 	int STATE_LOADING = 5;
-	/**
-	 * 任务中止
-	 */
 	void stop();
-	/**
-	 * 通知UI线程
-	 * @param state
-	 * @param object
-	 */
 	void dispatch(int state, Object object);
+	void executeOnExecutor(Executor executor);
 }

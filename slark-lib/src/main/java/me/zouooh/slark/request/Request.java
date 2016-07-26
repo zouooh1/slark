@@ -1,346 +1,274 @@
 package me.zouooh.slark.request;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.HashMap;
-import java.util.Map;
 
-import org.nutz.castor.Castors;
-import org.nutz.lang.Strings;
-
-import com.inttus.BurroDebug;
-import com.inttus.ants.Network.OnNetworkResponse;
-import com.inttus.ants.impl.DefaultRetryPolicy;
-import com.inttus.ants.tool.Record;
-
+import me.zouooh.slark.DataSource;
+import me.zouooh.slark.Logs;
+import me.zouooh.slark.NetworkResponse;
+import me.zouooh.slark.SlarkException;
+import me.zouooh.slark.cache.Cachework;
 import me.zouooh.slark.http.Network;
 import me.zouooh.slark.response.Progress;
 import me.zouooh.slark.response.Response;
-import me.zouooh.slark.task.impl.SlarkQueue;
+import me.zouooh.slark.task.Queue;
 import me.zouooh.slark.task.Task;
 
-public abstract class Request implements OnNetworkResponse{
-	
-	public interface Method {
-		int GET = 0;
-		int POST = 1;
-		int PUT = 2;
-		int DELETE = 3;
-		int HEAD = 4;
-		int OPTIONS = 5;
-		int TRACE = 6;
-		int PATCH = 7;
-	}
-	
-	public static final String DEFAULT_PARAMS_ENCODING = "UTF-8";
-	
-	private URL url;
-	private int method;
-	private Network network;
-	private Progress progress;
-	private Response<?> response;
-	private Task task;
-	private SlarkQueue slarkQueue;
+public abstract class Request implements RequestConfig {
 
-	protected HashMap<String, String> params;
-	protected HashMap<String, String> headers;
+    public String getUrl() {
+        return url;
+    }
 
-	private boolean ok = false;
-	private boolean process = false;
-	private boolean pause = false;
-	private boolean canceled = false;
-	
-	private RetryPolicy retryPolicy = new DefaultRetryPolicy();
-	
-	protected void _disptach(int state, Object object) {
-		if (getTask() != null) {
-			getTask().dispatch(state, object);
-		}
-	}
+    public int getMethod() {
+        return method;
+    }
 
-	public void _exe(){
-		if (!can()) {
-			return;
-		}
-		_disptach(Task.STATE_START, null);
-		try {
-			getData();
-		} catch (Exception e) {
-			_disptach(Task.STATE_FAILURE, e);
-		}
-		_disptach(Task.STATE_END, null);
-		process = false;
-	}
-	
-	public boolean can(){
-		return !isPause()&&!isCanceled();
-	}
-	
-	
-	public void param(String key,String value){
-		getParams().put(key, value);
-		ok = false;
-	}
-	
-	public void param(Record record){
-		Map<String, Object> ps = record.getMap();
-		for (String key : ps.keySet()) {
-			getParams().put(key, Castors.me().castToString(ps.get(key)));
-		}
-		ok = false;
-	}
-	
-	public void removeParam(String key){
-		getParams().remove(key);
-		ok = false;
-	}
-	
-	public void hearder(String key,String value){
-		getHeaders().put(key, value);
-		ok = false;
-	}
-	
-	/**
-	 * 销毁请求
-	 */
-	public void destroy() {
-		canceled = true;
-		progress = null;
-		response = null;
-		if (getTask() != null) {
-			getTask().stop();
-		}
-	}
-	
-	/**
-     * Converts <code>params</code> into an application/x-www-form-urlencoded encoded string.
-     */
-    private byte[] encodeParameters(Map<String, String> params, String paramsEncoding) {
-        StringBuilder encodedParams = new StringBuilder();
+    protected void setMethod(int method) {
+        this.method = method;
+    }
+
+    public Network getNetwork() {
+        return network;
+    }
+
+    public RequestConfig network(Network network) {
+        this.network = network;
+        return this;
+    }
+
+
+    public Cachework getCachework() {
+        return cachework;
+    }
+
+    public RequestConfig cachework(Cachework cachework) {
+        this.cachework = cachework;
+        return this;
+    }
+
+    public void setTask(Task task) {
+        this.task = task;
+    }
+
+    public Task getTask() {
+        return task;
+    }
+
+    public Queue getQueue() {
+        return queue;
+    }
+
+    public void setQueue(Queue queue) {
+        this.queue = queue;
+    }
+
+    public Progress getProgress() {
+        return progress;
+    }
+
+    public RequestConfig progress(Progress progress) {
+        this.progress = progress;
+        return this;
+    }
+
+    public Response getResponse() {
+        return response;
+    }
+
+    public RequestConfig response(Response response) {
+        this.response = response;
+        return this;
+    }
+
+    public RetryPolicy getRetryPolicy() {
+        return retryPolicy;
+    }
+
+    public RequestConfig retryPolicy(RetryPolicy retryPolicy) {
+        this.retryPolicy = retryPolicy;
+        return this;
+    }
+
+    public RequestConfig param(String key, String value) {
+        if (params == null) {
+            params = new HashMap<>();
+        }
+        params.put(key, value);
+        return this;
+    }
+
+    public RequestConfig hearder(String key, String value) {
+        if (headers == null) {
+            headers = new HashMap<>();
+        }
+        headers.put(key, value);
+        return this;
+    }
+
+    public boolean isPause() {
+        return pause;
+    }
+
+    public boolean isCanceled() {
+        return canceled;
+    }
+
+    public interface Method {
+        int GET = 0;
+        int POST = 1;
+        int PUT = 2;
+        int DELETE = 3;
+        int HEAD = 4;
+        int OPTIONS = 5;
+        int TRACE = 6;
+        int PATCH = 7;
+    }
+
+    public static final String DEFAULT_PARAMS_ENCODING = "UTF-8";
+
+    private String url;
+    protected URL requestURL;
+    private int method;
+    private Network network;
+    private Cachework cachework;
+    private Task task;
+    private Queue queue;
+    private Progress progress;
+    private Response response;
+    private RetryPolicy retryPolicy;
+
+    protected HashMap<String, String> params;
+    protected HashMap<String, String> headers;
+
+    private boolean lock = false;
+    private boolean process = false;
+    private boolean pause = false;
+    private boolean canceled = false;
+    private boolean disptachEnd = false;
+
+    public Request(String url) {
+        this.url = url;
+    }
+
+    public abstract URL makeURL();
+
+    public abstract NetworkResponse adpter(NetworkResponse networkResponse,DataSource dataSource) throws StatusException;
+
+    public URL requestURL() {
+        if (requestURL == null) {
+            requestURL = makeURL();
+        }
+        return requestURL;
+    }
+
+    public void request() {
+        if (url == null) {
+            Logs.d("[Pre]url is null.");
+        }
+        if (getQueue() == null) {
+            Logs.d("[Pre]request need run on a quene.");
+            return;
+        }
+        if (process) {
+            Logs.d("[Pre]request is processing.");
+            return;
+        }
+        process = true;
+
+        Progress progress = getProgress();
+
+        if (progress != null) {
+            progress.onRequestStart(this);
+        }
+
+        queue.executeRequest(this);
+    }
+
+    public void perform() {
+        if (isPause()) {
+            return;
+        }
         try {
-            for (Map.Entry<String, String> entry : params.entrySet()) {
-                encodedParams.append(URLEncoder.encode(entry.getKey(), paramsEncoding));
-                encodedParams.append('=');
-                encodedParams.append(URLEncoder.encode(entry.getValue(), paramsEncoding));
-                encodedParams.append('&');
+            Object object = loadData();
+            disptachState(Task.STATE_SUCCESS, object);
+        } catch (Exception e) {
+            disptachState(Task.STATE_FAILURE, e);
+        }
+        disptachState(Task.STATE_END, null);
+        process = false;
+    }
+
+    public Object loadData() throws IOException, SlarkException {
+        Cachework cachework = getCachework();
+        DataSource dataSource = DataSource.DISK;
+        NetworkResponse networkResponse = null;
+        Response response = getResponse();
+        if (cachework != null) {
+            networkResponse = cachework.open();
+        }
+        if (networkResponse == null) {
+            Network network = getNetwork();
+            networkResponse = network.open();
+            dataSource = DataSource.NETWORK;
+            if (cachework != null) {
+                networkResponse = cachework.process(networkResponse);
             }
-            return encodedParams.toString().getBytes(paramsEncoding);
-        } catch (UnsupportedEncodingException uee) {
-            throw new RuntimeException("Encoding not supported: " + paramsEncoding, uee);
+        }
+        if (networkResponse!=null){
+            networkResponse = adpter(networkResponse,dataSource);
+        }
+        Object object = null;
+        if (networkResponse != null && response != null) {
+            object = response.adpter(this, networkResponse, dataSource);
+        }
+        return object;
+    }
+
+    protected void disptachState(int state, Object object) {
+        if (state == Task.STATE_END) {
+            if (disptachEnd) {
+                return;
+            }
+            disptachEnd = true;
+        }
+        if (getTask() != null) {
+            getTask().dispatch(state, object);
         }
     }
-	
-	/**
-     * Returns the raw POST or PUT body to be sent.
-     *
-     * <p>By default, the body consists of the request parameters in
-     * application/x-www-form-urlencoded format. When overriding this method, consider overriding
-     * {@link #getBodyContentType()} as well to match the new body format.
-     *
-     * @throws AuthFailureError in the event of auth failure
-     */
-    public byte[] getBody() throws AuthFailureError {
-        Map<String, String> params = getParams();
-        if (params != null && params.size() > 0) {
-            return encodeParameters(params, getParamsEncoding());
+
+    public void pause() {
+        pause = true;
+    }
+
+    public void destroy() {
+        if (!isPause()) {
+            pause();
         }
-        return null;
+        canceled = true;
+        progress = null;
+        response = null;
+        queue = null;
+        if (params != null) {
+            params.clear();
+            params = null;
+        }
+        if (headers != null) {
+            headers.clear();
+            headers = null;
+        }
+        if (cachework != null) {
+            cachework.release();
+            cachework = null;
+        }
+        if (network != null) {
+            network.close();
+            network = null;
+        }
+        if (task != null) {
+            task.stop();
+            task = null;
+        }
     }
-	/**
-     * Returns the content type of the POST or PUT body.
-     */
-    public String getBodyContentType() {
-        return "application/x-www-form-urlencoded; charset=" + getParamsEncoding();
-    }
-    
-	protected void getData() throws AntsException,IOException{
-		if (network != null && can()) {
-			network.performRequest(this);
-		}
-	}
-	public HashMap<String, String> getHeaders() {
-		if (headers == null) {
-			headers = new HashMap<String, String>();
-		}
-		return headers;
-	}
-	public int getMethod() {
-		return method;
-	}
-	public Network getNetwork() {
-		return network;
-	}
-	public HashMap<String, String> getParams() {
-		if (params == null) {
-			params = new HashMap<String, String>();
-		}
-		return params;
-	}
-	protected String getParamsEncoding() {
-        return DEFAULT_PARAMS_ENCODING;
-    }
-	public Progress getProgress() {
-		return progress;
-	}
-	public Response<?> getResponse() {
-		return response;
-	}
-	public RetryPolicy getRetryPolicy() {
-		return retryPolicy;
-	}
-	public final int getTimeoutMs() {
-        return getRetryPolicy().getCurrentTimeout();
-    }
-	public String getUrl() {
-		if (Strings.isBlank(url)) {
-			return null;
-		}
-		if (!url.startsWith("http")) {
-			url = getAntsQueue().getHost()+url;
-		}
-		return url;
-	}
-	public boolean isCanceled() {
-		return canceled;
-	}
-	public boolean isOk() {
-		return ok;
-	}
-	public boolean isPause() {
-		return pause;
-	}
-	public boolean isProcess() {
-		return process;
-	}
-	/**
-	 * 停止请求
-	 */
-	public void pause() {
-		process = false;
-		pause = true;
-	}
-	
-	/**
-	 * 异步请求，立即在该队列运行
-	 */
-	public void request() {
-		requestOnAntsQueue(getAntsQueue());
-	}
-	
-	/**
-	 * 异步请求，立即在该队列运行
-	 */
-	public void requestOnAntsQueue(AntsQueue antsQueue) {
-		if (antsQueue == null) {
-			return;
-		}
-		if (process) {
-			if (BurroDebug.dataEable()) {
-				BurroDebug.dataf("%s is exeing cancel", this);
-			}
-			return;
-		}
-		process = true;
-		_reset();
-		if (this.network == null) {
-			this.network = antsQueue.getNetwork();
-		}
-		antsQueue.executeTask(this);
-	}
-	
-	protected void _reset() {
-		pause = false;
-		canceled = false;
-	}
-
-	public void setCanceled(boolean canceled) {
-		this.canceled = canceled;
-	}
-
-
-	public void setHeaders(HashMap<String, String> headers) {
-		this.headers = headers;
-	}
-	
-	public void setMethod(int method) {
-		this.method = method;
-	}
-	
-	
-	 public void setNetwork(Network network) {
-		this.network = network;
-	}
-
-    public void setOk(boolean ok) {
-		this.ok = ok;
-	}
-
-    public void setParams(HashMap<String, String> params) {
-		this.params = params;
-	}
-
-
-	public void setPause(boolean pause) {
-		this.pause = pause;
-	}
-
-
-	public void setProcess(boolean process) {
-		this.process = process;
-	}
-	
-	
-	public void setProgress(Progress progress) {
-		this.progress = progress;
-	}
-
-
-	public void setResponse(Response<?> response) {
-		this.response = response;
-	}
-
-
-	public void setRetryPolicy(RetryPolicy retryPolicy) {
-		this.retryPolicy = retryPolicy;
-	}
-	
-	
-	public void setUrl(String url) {
-		ok = false;
-		this.url = url;
-	}
-
-	/**
-	 * 提交一个请求,运行在该队列<br>
-	 * 不会立即执行，队列决定运行时机。
-	 */
-	public void submitOnAntsQueue(AntsQueue antsQueue) {
-		antsQueue.submitTask(this);
-	}
-	
-	
-	protected  boolean hasResponseBody(int responseCode) {
-        return method != Method.HEAD
-            && !(HttpStatus.SC_CONTINUE <= responseCode && responseCode < HttpStatus.SC_OK)
-            && responseCode != HttpStatus.SC_NO_CONTENT
-            && responseCode != HttpStatus.SC_NOT_MODIFIED;
-    }
-
-	public Task getTask() {
-		return task;
-	}
-
-	public void setTask(Task task) {
-		this.task = task;
-	}
-
-	public AntsQueue getAntsQueue() {
-		return antsQueue;
-	}
-	
-	public void setAntsQueue(AntsQueue antsQueue) {
-		this.antsQueue = antsQueue;
-	}
 }

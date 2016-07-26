@@ -10,25 +10,27 @@ import me.zouooh.slark.request.Request;
  */
 public interface Progress {
 
+	boolean loading();
+
 	/**
 	 * 请求开始
 	 */
-	void onRequestStart(Request antsRequest);
+	void onRequestStart(Request request);
 
 	/**
 	 * 请求结束
 	 */
-	void onRequestEnd(Request antsRequest);
-	
+	void onRequestEnd(Request request);
+
 	/**
 	 * 请求成功
 	 */
-	void onRequestSucess(Request antsRequest);
+	void onRequestSucess(Request request);
 	
 	/**
 	 * 请求失败
 	 */
-	void onRequestFailure(Request antsRequest, Throwable throwable);
+	void onRequestFailure(Request request, Throwable throwable);
 
 	/**
 	 * 请求进度

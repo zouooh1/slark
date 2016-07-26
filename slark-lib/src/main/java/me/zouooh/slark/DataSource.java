@@ -5,6 +5,5 @@ package me.zouooh.slark;
  */
 public enum DataSource {
     DISK,
-    MEMERY,
     NETWORK
 }

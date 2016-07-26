@@ -8,14 +8,13 @@ import me.zouooh.slark.request.Request;
  * Created by zouooh on 2016/7/26.
  */
 public interface Queue {
-    Request get(Sting path);
-    Request g(Sting path);
-    Request post(Sting path);
-    Request p(Sting path);
-
-    Network buildNetwork(Request request);
-    Cachework buildCachework(Request request);
-
+    ContextHolder contexHolder();
+    Request get(String path);
+    Request post(String path);
+    void fillRequest(Request request);
+    void destory(Request request);
+    void submitRequest(Request request);
+    void executeRequest(Request request);
     void resume();
     void pause();
     void destroy();
