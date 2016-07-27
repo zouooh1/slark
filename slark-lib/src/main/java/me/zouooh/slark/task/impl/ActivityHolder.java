@@ -36,4 +36,8 @@ public class ActivityHolder implements ContextHolder {
         return true;
     }
 
+    @Override
+    public void release() {
+        this.activity = null;
+    }
 }
