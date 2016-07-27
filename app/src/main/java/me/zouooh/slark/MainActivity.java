@@ -1,5 +1,7 @@
 package me.zouooh.slark;
 
+import android.content.ComponentCallbacks;
+import android.content.res.Configuration;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 

@@ -33,11 +33,7 @@ public class ActivityHolder implements ContextHolder {
         if (this.activity.isFinishing()) {
             return false;
         }
-        return false;
+        return true;
     }
 
-    @Override
-    public void release() {
-        this.activity = null;
-    }
 }
