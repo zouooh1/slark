@@ -7,7 +7,7 @@ import java.io.UnsupportedEncodingException;
 
 import me.zouooh.slark.DataSource;
 import me.zouooh.slark.Logs;
-import me.zouooh.slark.NetworkResponse;
+import me.zouooh.slark.DataResponse;
 import me.zouooh.slark.Slark;
 import me.zouooh.slark.SlarkException;
 import me.zouooh.slark.http.HttpHeaderParser;
@@ -17,7 +17,7 @@ public  class TextResponse implements Response<String> {
 
 
 	@Override
-	public String adpter(Request request, NetworkResponse networkResponse, DataSource dataSource) throws SlarkException, IOException {
+	public String adpter(Request request, DataResponse networkResponse) throws SlarkException, IOException {
 		InputStream inputStream = networkResponse.data;
 		String parsed;
 		byte[] data = null;

@@ -16,7 +16,7 @@ public class Logs {
 
     public static void dd(String datas) {
         if (Slark.DEBUG_DATAS){
-            Log.d(TAG, buildMessage(datas, null));
+            Log.d(TAG, buildMessage(datas));
         }
     }
 

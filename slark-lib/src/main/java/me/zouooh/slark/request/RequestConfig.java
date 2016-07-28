@@ -11,6 +11,8 @@ import me.zouooh.slark.response.Response;
 public interface RequestConfig {
     RequestConfig param(String name,String value);
     RequestConfig header(String name,String value);
+    RequestConfig file(String name,String filePath);
+    RequestConfig file(String name,String filePath,String type);
     RequestConfig network(Network network);
     RequestConfig cachework(Cachework cachework);
     RequestConfig retryPolicy(RetryPolicy retryPolicy);

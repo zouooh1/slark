@@ -18,9 +18,9 @@ import java.util.Map.Entry;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 
+import me.zouooh.slark.DataSource;
 import me.zouooh.slark.Logs;
-import me.zouooh.slark.NetworkResponse;
-import me.zouooh.slark.Slark;
+import me.zouooh.slark.DataResponse;
 import me.zouooh.slark.SlarkException;
 import me.zouooh.slark.request.Request;
 import me.zouooh.slark.request.RetryPolicy;
@@ -51,7 +51,6 @@ public class UrlNetwork implements Network {
             return null;
         }
         URL parsedUrl = request.requestURL();
-        Logs.d("%s is connecting!", parsedUrl);
         HttpURLConnection connection = openConnection(parsedUrl, request);
         if (request.getHeaders() != null) {
             for (String headerName : request.getHeaders().keySet()) {
@@ -73,7 +72,7 @@ public class UrlNetwork implements Network {
     }
 
     @Override
-    public NetworkResponse open() throws SlarkException {
+    public DataResponse open() throws SlarkException {
         if (request == null) {
             return null;
         }
@@ -82,6 +81,7 @@ public class UrlNetwork implements Network {
             try {
                 Map<String, String> responseHeaders = new LinkedHashMap<>();
                 InputStream inputStream = null;
+                Logs.d("%s is connecting!", request.requestURL());
                 httpsURLConnection = _exe();
                 statusCode = httpsURLConnection.getResponseCode();
                 if (statusCode == -1) {
@@ -103,16 +103,15 @@ public class UrlNetwork implements Network {
                 } catch (IOException e) {
                 }
 
-                NetworkResponse networkResponse = new NetworkResponse(statusCode, inputStream,
-                        responseHeaders,contentLength);
+                DataResponse networkResponse = new DataResponse(statusCode, inputStream,
+                        responseHeaders,contentLength, DataSource.NETWORK);
                 return networkResponse;
             } catch (SocketTimeoutException e) {
                 attemptRetryOnException(request, new TimeoutError());
             } catch (MalformedURLException e) {
                 throw new SlarkException("Bad URL " + request.requestURL(), e);
             } catch (IOException e) {
-                Logs.d("Unexpected response code %d for %s", statusCode,
-                        request.getUrl());
+                Logs.d("%s unexpected response code %d",request.requestURL(), statusCode);
                 throw new NetworkError();
             }
         }

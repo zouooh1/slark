@@ -1,16 +1,19 @@
 package me.zouooh.slark.request;
 
+import org.nutz.lang.Strings;
+
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
-import me.zouooh.slark.DataSource;
+import me.zouooh.slark.DataResponse;
 import me.zouooh.slark.Logs;
-import me.zouooh.slark.NetworkResponse;
 import me.zouooh.slark.SlarkException;
 import me.zouooh.slark.cache.Cachework;
 import me.zouooh.slark.http.Network;
@@ -103,6 +106,21 @@ public abstract class Request implements RequestConfig {
         return this;
     }
 
+    public RequestConfig file(String name, String filePath) {
+        return file(name, filePath, IMAGE);
+    }
+
+    public RequestConfig file(String name, String filePath, String type) {
+        if (Strings.isBlank(filePath) || Strings.isBlank(filePath)) {
+            return this;
+        }
+        if (fileItems == null) {
+            fileItems = new LinkedList<>();
+        }
+        fileItems.add(new FormFileItem(filePath, filePath, type));
+        return this;
+    }
+
     public RequestConfig header(String key, String value) {
         if (headers == null) {
             headers = new HashMap<>();
@@ -119,12 +137,12 @@ public abstract class Request implements RequestConfig {
         return canceled;
     }
 
-    public boolean isFinish(){
+    public boolean isFinish() {
         return finish;
     }
 
     public final int getTimeoutMs() {
-        if (getRetryPolicy() != null){
+        if (getRetryPolicy() != null) {
             return getRetryPolicy().getCurrentTimeout();
         }
         return DEFAULT_TIMES_OUT;
@@ -138,7 +156,7 @@ public abstract class Request implements RequestConfig {
         return DEFAULT_PARAMS_ENCODING;
     }
 
-    public HashMap<String,String> getHeaders() {
+    public HashMap<String, String> getHeaders() {
         return headers;
     }
 
@@ -155,6 +173,8 @@ public abstract class Request implements RequestConfig {
 
     public static final String DEFAULT_PARAMS_ENCODING = "UTF-8";
     public static final int DEFAULT_TIMES_OUT = 3000;
+    public static final String BOUNDARY = "----------HV2ymHFg03ehbqgZCaKO65jyHcd";
+    public static final String IMAGE = "image";
 
     private String url;
     protected URL requestURL;
@@ -169,7 +189,7 @@ public abstract class Request implements RequestConfig {
 
     protected HashMap<String, String> params;
     protected HashMap<String, String> headers;
-    protected HashMap<String, FormFileItem> files;
+    protected List<FormFileItem> fileItems;
 
     private boolean finish = false;
     private boolean process = false;
@@ -183,7 +203,7 @@ public abstract class Request implements RequestConfig {
 
     public abstract URL makeURL();
 
-    public abstract NetworkResponse adpter(NetworkResponse networkResponse,DataSource dataSource) throws SlarkException;
+    public abstract DataResponse adpter(DataResponse networkResponse) throws SlarkException;
 
     public URL requestURL() {
         if (requestURL == null) {
@@ -232,7 +252,7 @@ public abstract class Request implements RequestConfig {
         }
 
         Network network = getNetwork();
-        if (network!=null){
+        if (network != null) {
             network.close();
         }
         disptachState(Task.STATE_END, null);
@@ -240,10 +260,9 @@ public abstract class Request implements RequestConfig {
         finish = true;
     }
 
-    public Object loadData() throws  SlarkException,IOException {
+    public Object loadData() throws SlarkException, IOException {
         Cachework cachework = getCachework();
-        DataSource dataSource = DataSource.DISK;
-        NetworkResponse networkResponse = null;
+        DataResponse networkResponse = null;
         Response response = getResponse();
 
         if (cachework != null) {
@@ -253,25 +272,24 @@ public abstract class Request implements RequestConfig {
             Network network = getNetwork();
             try {
                 networkResponse = network.open();
-                dataSource = DataSource.NETWORK;
-            }catch (SlarkException e){
-                if ( cachework != null){
+            } catch (SlarkException e) {
+                if (cachework != null) {
                     networkResponse = cachework.open(e);
                 }
             }
-            if (networkResponse!=null){
-                networkResponse = adpter(networkResponse,dataSource);
+            if (networkResponse != null) {
+                networkResponse = adpter(networkResponse);
             }
-            if (networkResponse!=null && cachework != null) {
+            if (networkResponse != null && cachework != null) {
                 networkResponse = cachework.process(networkResponse);
-                if (network!=null){
+                if (network != null) {
                     network.close();
                 }
             }
         }
         Object object = null;
         if (networkResponse != null && response != null) {
-            object = response.adpter(this, networkResponse, dataSource);
+            object = response.adpter(this, networkResponse);
         }
         return object;
     }
@@ -326,7 +344,7 @@ public abstract class Request implements RequestConfig {
         }
     }
 
-    public byte[] getBody()  {
+    public byte[] getBody() {
 
         if (params != null && params.size() > 0) {
             return encodeParameters(params, getParamsEncoding());
@@ -349,11 +367,10 @@ public abstract class Request implements RequestConfig {
         }
     }
 
-    public boolean hasFile(){
-        return files == null&&files.size() > 0;
+    public boolean hasFile() {
+        return fileItems == null && fileItems.size() > 0;
     }
 
-    public void sendData(DataOutputStream out)
-            throws UnsupportedEncodingException, IOException{
+    public void sendData(DataOutputStream out) throws IOException {
     }
 }
