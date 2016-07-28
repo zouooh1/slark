@@ -1,7 +1,5 @@
 package me.zouooh.slark.task;
 
-import me.zouooh.slark.cache.Cachework;
-import me.zouooh.slark.http.Network;
 import me.zouooh.slark.request.Request;
 
 /**
@@ -9,9 +7,13 @@ import me.zouooh.slark.request.Request;
  */
 public interface Queue extends Task.TaskLisnter{
     ContextHolder contextHolder();
-    Request get(String path);
-    Request post(String path);
-    void fillRequest(Request request);
+    Request g(String path);
+    Request g(String hostname,String path);
+    Request p(String path);
+    Request p(String hostname,String path);
+    Request get(String url);
+    Request post(String url);
+    Request fillRequest(Request request);
     void destory(Request request);
     void submitRequest(Request request);
     void executeRequest(Request request);

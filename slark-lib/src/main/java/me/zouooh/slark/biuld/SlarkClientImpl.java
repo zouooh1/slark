@@ -6,6 +6,7 @@ import java.io.File;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import me.zouooh.slark.task.Aspect;
 import me.zouooh.slark.task.CacheworkFactory;
 import me.zouooh.slark.task.NetworkFactory;
 import me.zouooh.slark.task.TaskFactory;
@@ -49,5 +50,10 @@ public class SlarkClientImpl implements SlarkClient{
     @Override
     public ExecutorService executorService() {
         return Executors.newFixedThreadPool(5);
+    }
+
+    @Override
+    public Aspect aspect() {
+        return null;
     }
 }

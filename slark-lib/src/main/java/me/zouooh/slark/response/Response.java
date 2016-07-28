@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import me.zouooh.slark.DataSource;
 import me.zouooh.slark.NetworkResponse;
+import me.zouooh.slark.SlarkException;
 import me.zouooh.slark.request.Request;
 
 /**
@@ -14,7 +15,7 @@ import me.zouooh.slark.request.Request;
 public interface Response<T> {
 	
 	
-	T adpter(Request request, NetworkResponse networkResponse, DataSource dataSource) throws ParseError,IOException;
+	T adpter(Request request, NetworkResponse networkResponse, DataSource dataSource) throws SlarkException,IOException;
 	
 	/**
 	 * 请求成功

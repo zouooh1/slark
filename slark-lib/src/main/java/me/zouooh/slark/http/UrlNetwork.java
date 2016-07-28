@@ -20,6 +20,7 @@ import javax.net.ssl.SSLSocketFactory;
 
 import me.zouooh.slark.Logs;
 import me.zouooh.slark.NetworkResponse;
+import me.zouooh.slark.Slark;
 import me.zouooh.slark.SlarkException;
 import me.zouooh.slark.request.Request;
 import me.zouooh.slark.request.RetryPolicy;
@@ -50,7 +51,7 @@ public class UrlNetwork implements Network {
             return null;
         }
         URL parsedUrl = request.requestURL();
-        Logs.d("[Network]:%s is connecting!", parsedUrl);
+        Logs.d("%s is connecting!", parsedUrl);
         HttpURLConnection connection = openConnection(parsedUrl, request);
         if (request.getHeaders() != null) {
             for (String headerName : request.getHeaders().keySet()) {

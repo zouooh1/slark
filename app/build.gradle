@@ -5,7 +5,7 @@ android {
     buildToolsVersion "24.0.0"
 
     defaultConfig {
-        applicationId "me.zouooh.slark"
+        applicationId "me.zouooh.slark.s"
         minSdkVersion 14
         targetSdkVersion 24
         versionCode 1
@@ -23,4 +23,5 @@ dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:24.+'
+    compile project(path: ':slark-lib')
 }

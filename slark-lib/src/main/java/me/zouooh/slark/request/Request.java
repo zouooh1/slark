@@ -103,7 +103,7 @@ public abstract class Request implements RequestConfig {
         return this;
     }
 
-    public RequestConfig hearder(String key, String value) {
+    public RequestConfig header(String key, String value) {
         if (headers == null) {
             headers = new HashMap<>();
         }
@@ -117,6 +117,10 @@ public abstract class Request implements RequestConfig {
 
     public boolean isCanceled() {
         return canceled;
+    }
+
+    public boolean isFinish(){
+        return finish;
     }
 
     public final int getTimeoutMs() {
@@ -167,7 +171,7 @@ public abstract class Request implements RequestConfig {
     protected HashMap<String, String> headers;
     protected HashMap<String, FormFileItem> files;
 
-    private boolean lock = false;
+    private boolean finish = false;
     private boolean process = false;
     private boolean pause = false;
     private boolean canceled = false;
@@ -179,7 +183,7 @@ public abstract class Request implements RequestConfig {
 
     public abstract URL makeURL();
 
-    public abstract NetworkResponse adpter(NetworkResponse networkResponse,DataSource dataSource) throws StatusException;
+    public abstract NetworkResponse adpter(NetworkResponse networkResponse,DataSource dataSource) throws SlarkException;
 
     public URL requestURL() {
         if (requestURL == null) {
@@ -190,17 +194,22 @@ public abstract class Request implements RequestConfig {
 
     public void request() {
         if (url == null) {
-            Logs.d("[Pre]url is null.");
+            Logs.d("url is null.");
         }
         if (getQueue() == null) {
-            Logs.d("[Pre]request need run on a quene.");
+            Logs.d("request need run on a quene.");
             return;
         }
         if (process) {
-            Logs.d("[Pre]request is processing.");
+            Logs.d("request is processing.");
+            return;
+        }
+        if (finish) {
+            Logs.d("request is finished.");
             return;
         }
         process = true;
+        finish = false;
 
         Progress progress = getProgress();
 
@@ -221,28 +230,44 @@ public abstract class Request implements RequestConfig {
         } catch (Exception e) {
             disptachState(Task.STATE_FAILURE, e);
         }
+
+        Network network = getNetwork();
+        if (network!=null){
+            network.close();
+        }
         disptachState(Task.STATE_END, null);
         process = false;
+        finish = true;
     }
 
-    public Object loadData() throws IOException, SlarkException {
+    public Object loadData() throws  SlarkException,IOException {
         Cachework cachework = getCachework();
         DataSource dataSource = DataSource.DISK;
         NetworkResponse networkResponse = null;
         Response response = getResponse();
+
         if (cachework != null) {
             networkResponse = cachework.open();
         }
         if (networkResponse == null) {
             Network network = getNetwork();
-            networkResponse = network.open();
-            dataSource = DataSource.NETWORK;
-            if (cachework != null) {
-                networkResponse = cachework.process(networkResponse);
+            try {
+                networkResponse = network.open();
+                dataSource = DataSource.NETWORK;
+            }catch (SlarkException e){
+                if ( cachework != null){
+                    networkResponse = cachework.open(e);
+                }
             }
-        }
-        if (networkResponse!=null){
-            networkResponse = adpter(networkResponse,dataSource);
+            if (networkResponse!=null){
+                networkResponse = adpter(networkResponse,dataSource);
+            }
+            if (networkResponse!=null && cachework != null) {
+                networkResponse = cachework.process(networkResponse);
+                if (network!=null){
+                    network.close();
+                }
+            }
         }
         Object object = null;
         if (networkResponse != null && response != null) {
@@ -261,6 +286,10 @@ public abstract class Request implements RequestConfig {
         if (getTask() != null) {
             getTask().dispatch(state, object);
         }
+    }
+
+    public void resume() {
+        pause = false;
     }
 
     public void pause() {

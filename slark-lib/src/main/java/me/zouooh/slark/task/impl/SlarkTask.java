@@ -55,6 +55,9 @@ public class SlarkTask extends AsyncTask<String, Object, Object> implements Task
         if (request == null) {
             return;
         }
+        if (!needDispatch()){
+            return;
+        }
         Response response = request.getResponse();
         Progress progress = request.getProgress();
         int update = Integer.valueOf(String.valueOf(values[0]));
@@ -111,5 +114,24 @@ public class SlarkTask extends AsyncTask<String, Object, Object> implements Task
             return;
         }
         super.executeOnExecutor(executor);
+    }
+
+    private boolean needDispatch(){
+        if (request == null){
+            return  false;
+        }
+
+        if (request.isCanceled()){
+            return false;
+        }
+
+        Queue queue = request.getQueue();
+        if (queue != null){
+            ContextHolder contextHolder = queue.contextHolder();
+            if (contextHolder!=null){
+                return  contextHolder.canDispatch();
+            }
+        }
+        return true;
     }
 }

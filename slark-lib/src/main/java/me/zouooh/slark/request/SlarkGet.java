@@ -11,10 +11,10 @@ import me.zouooh.slark.http.HttpStatus;
 /**
  * Created by zouooh on 2016/7/26.
  */
-public class SlarkPost extends Request{
-    public SlarkPost(String url) {
+public class SlarkGet extends Request{
+    public SlarkGet(String url) {
         super(url);
-        setMethod(Method.POST);
+        setMethod(Method.GET);
     }
 
     @Override
@@ -31,6 +31,6 @@ public class SlarkPost extends Request{
     public NetworkResponse adpter(NetworkResponse networkResponse, DataSource dataSource) throws SlarkException {
         if (networkResponse.statusCode == HttpStatus.SC_OK)
             return  networkResponse;
-        throw new StatusException(networkResponse.statusCode);
+        return null;
     }
 }

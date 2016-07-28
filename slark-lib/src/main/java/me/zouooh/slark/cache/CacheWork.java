@@ -8,6 +8,7 @@ import me.zouooh.slark.SlarkException;
  */
 public interface Cachework {
     NetworkResponse open();
+    NetworkResponse open(SlarkException slarkException);
     NetworkResponse process(NetworkResponse networkResponse);
     void release();
 }
