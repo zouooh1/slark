@@ -6,9 +6,10 @@ import java.io.File;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import me.zouooh.slark.task.Aspect;
+import me.zouooh.slark.task.QueueAspect;
 import me.zouooh.slark.task.CacheworkFactory;
 import me.zouooh.slark.task.NetworkFactory;
+import me.zouooh.slark.task.RequestAspectFactory;
 import me.zouooh.slark.task.TaskFactory;
 import me.zouooh.slark.task.impl.SlarkCacheworkFactory;
 import me.zouooh.slark.task.impl.SlarkNetworkFactory;
@@ -19,17 +20,10 @@ import me.zouooh.slark.task.impl.SlarkTaskFactory;
  */
 public class SlarkClientImpl implements SlarkClient{
 
-    private static  final String DIR = "slark/data";
-
     private Context context;
 
     public SlarkClientImpl(Context context){
         this.context = context;
-    }
-
-    @Override
-    public File base() {
-        return null;
     }
 
     @Override
@@ -49,11 +43,15 @@ public class SlarkClientImpl implements SlarkClient{
 
     @Override
     public ExecutorService executorService() {
-        return Executors.newFixedThreadPool(5);
+        return Executors.newFixedThreadPool(3);
     }
 
     @Override
-    public Aspect aspect() {
+    public QueueAspect aspect() {
+        return null;
+    }
+    @Override
+    public RequestAspectFactory requestAspectFactory() {
         return null;
     }
 }

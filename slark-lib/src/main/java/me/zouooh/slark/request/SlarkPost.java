@@ -12,7 +12,6 @@ import java.util.Map;
 import me.zouooh.slark.DataResponse;
 import me.zouooh.slark.SlarkException;
 import me.zouooh.slark.http.HttpStatus;
-import me.zouooh.utils.BitmapUtils;
 
 /**
  * Created by zouooh on 2016/7/26.
@@ -21,6 +20,7 @@ public class SlarkPost extends Request {
     public SlarkPost(String url) {
         super(url);
         setMethod(Method.POST);
+        retryPolicy(new DefaultRetryPolicy(DefaultRetryPolicy.DEFAULT_TIMEOUT_MS,0,1));
     }
 
     @Override
@@ -78,17 +78,6 @@ public class SlarkPost extends Request {
 
                 byte[] data = sb.toString().getBytes();
                 out.write(data);
-
-                if ("image".equals(fname.getType())) {
-                    File temp = null;
-                    try {
-                        temp = BitmapUtils.compress(960,80, file);
-                    } catch (Exception e) {
-                    }
-                    if (temp != null) {
-                        file = temp;
-                    }
-                }
 
                 DataInputStream in = new DataInputStream(new FileInputStream(
                         file));

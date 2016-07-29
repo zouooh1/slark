@@ -7,13 +7,15 @@ import java.util.concurrent.ExecutorService;
 import me.zouooh.slark.Logs;
 import me.zouooh.slark.Slark;
 import me.zouooh.slark.request.Request;
+import me.zouooh.slark.request.RequestAspect;
 import me.zouooh.slark.request.SlarkGet;
 import me.zouooh.slark.request.SlarkPost;
-import me.zouooh.slark.task.Aspect;
+import me.zouooh.slark.task.QueueAspect;
 import me.zouooh.slark.task.CacheworkFactory;
 import me.zouooh.slark.task.ContextHolder;
 import me.zouooh.slark.task.NetworkFactory;
 import me.zouooh.slark.task.Queue;
+import me.zouooh.slark.task.RequestAspectFactory;
 import me.zouooh.slark.task.Task;
 import me.zouooh.slark.task.TaskFactory;
 
@@ -28,17 +30,21 @@ public class SlarkQueue implements Queue {
     protected TaskFactory taskFactory;
     protected NetworkFactory networkFactory;
     protected CacheworkFactory cacheworkFactory;
-    protected Aspect aspect;
+    protected QueueAspect aspect;
+    protected RequestAspectFactory requestAspectFactory;
     private List<Request> requests = new LinkedList<>();
     private boolean resume = false;
 
-    public SlarkQueue(ContextHolder contextHolder, ExecutorService executorService, TaskFactory taskFactory, NetworkFactory networkFactory, CacheworkFactory cacheworkFactory, Aspect aspect) {
+    public SlarkQueue(ContextHolder contextHolder, ExecutorService executorService, TaskFactory taskFactory,
+                      NetworkFactory networkFactory, CacheworkFactory cacheworkFactory, QueueAspect aspect,
+                      RequestAspectFactory requestAspectFactory) {
         this.contextHolder = contextHolder;
         this.executorService = executorService;
         this.taskFactory = taskFactory;
         this.networkFactory = networkFactory;
         this.cacheworkFactory = cacheworkFactory;
         this.aspect = aspect;
+        this.requestAspectFactory = requestAspectFactory;
     }
 
     @Override
@@ -90,8 +96,11 @@ public class SlarkQueue implements Queue {
         if (networkFactory != null) {
             request.network(networkFactory.buildNetwork(request));
         }
+        if (requestAspectFactory != null){
+            request.aspect(requestAspectFactory.buildRequestAspect(request));
+        }
         if (aspect != null) {
-            aspect.aspect(request);
+            request = aspect.aspect(request);
         }
         return request;
     }

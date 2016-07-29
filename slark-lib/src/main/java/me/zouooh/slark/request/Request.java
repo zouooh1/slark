@@ -98,6 +98,14 @@ public abstract class Request implements RequestConfig {
         return this;
     }
 
+    public RequestAspect getRequestAspect(){
+        return  requestAspect;
+    }
+    public  RequestConfig aspect(RequestAspect requestAspect){
+        this.requestAspect = requestAspect;
+        return  this;
+    }
+
     public RequestConfig param(String key, String value) {
         if (params == null) {
             params = new HashMap<>();
@@ -186,6 +194,7 @@ public abstract class Request implements RequestConfig {
     private Progress progress;
     private Response response;
     private RetryPolicy retryPolicy;
+    private RequestAspect requestAspect;
 
     protected HashMap<String, String> params;
     protected HashMap<String, String> headers;
@@ -244,11 +253,22 @@ public abstract class Request implements RequestConfig {
         if (isPause()) {
             return;
         }
+
+        RequestAspect requestAspect = getRequestAspect();
+
+        if (requestAspect!=null){
+            requestAspect.aftereOnBack(this);
+        }
+
         try {
             Object object = loadData();
             disptachState(Task.STATE_SUCCESS, object);
         } catch (Exception e) {
             disptachState(Task.STATE_FAILURE, e);
+        }
+
+        if (requestAspect!=null){
+            requestAspect.aftereOnBack(this);
         }
 
         Network network = getNetwork();

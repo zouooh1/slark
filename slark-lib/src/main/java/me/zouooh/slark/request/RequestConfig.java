@@ -18,5 +18,6 @@ public interface RequestConfig {
     RequestConfig retryPolicy(RetryPolicy retryPolicy);
     RequestConfig progress(Progress progress);
     RequestConfig response(Response response);
+    RequestConfig aspect(RequestAspect requestAspect);
     void  request();
 }

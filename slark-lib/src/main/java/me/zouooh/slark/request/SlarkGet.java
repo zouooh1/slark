@@ -19,6 +19,7 @@ public class SlarkGet extends Request{
     public SlarkGet(String url) {
         super(url);
         setMethod(Method.GET);
+        retryPolicy(new DefaultRetryPolicy());
     }
 
     @Override
