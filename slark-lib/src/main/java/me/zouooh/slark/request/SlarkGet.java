@@ -56,6 +56,6 @@ public class SlarkGet extends Request{
     public DataResponse adpter(DataResponse networkResponse) throws SlarkException {
         if (networkResponse.statusCode == HttpStatus.SC_OK)
             return  networkResponse;
-        return null;
+        throw new StatusException(networkResponse.statusCode);
     }
 }

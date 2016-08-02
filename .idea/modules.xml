@@ -5,7 +5,6 @@
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/slark.iml" filepath="$PROJECT_DIR$/slark.iml" />
       <module fileurl="file://$PROJECT_DIR$/slark-lib/slark-lib.iml" filepath="$PROJECT_DIR$/slark-lib/slark-lib.iml" />
-      <module fileurl="file://$PROJECT_DIR$/slark-lib/slark_lib.iml" filepath="$PROJECT_DIR$/slark-lib/slark_lib.iml" />
     </modules>
   </component>
 </project>

@@ -3,6 +3,7 @@ package me.zouooh.slark;
 import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
+import android.support.v4.app.Fragment;
 
 import java.io.File;
 import java.util.HashMap;
@@ -19,6 +20,7 @@ import me.zouooh.slark.task.RequestAspectFactory;
 import me.zouooh.slark.task.TaskFactory;
 import me.zouooh.slark.task.impl.ActivityHolder;
 import me.zouooh.slark.task.impl.ApplactionHolder;
+import me.zouooh.slark.task.impl.FragmentHolder;
 import me.zouooh.slark.task.impl.SlarkQueue;
 
 /**
@@ -76,6 +78,16 @@ public final class Slark {
             ContextHolder contextHolder = new ActivityHolder(activity);
             queue = create(contextHolder);
             queues.put(activity, queue);
+        }
+        return queue;
+    }
+
+    public static Queue with(Fragment fragment) {
+        Queue queue = queues.get(fragment);
+        if (queue == null) {
+            ContextHolder contextHolder = new FragmentHolder(fragment);
+            queue = create(contextHolder);
+            queues.put(fragment, queue);
         }
         return queue;
     }

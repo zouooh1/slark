@@ -7,7 +7,6 @@ import java.util.Locale;
 public class Logs {
     public static String TAG = "Slark";
 
-
     public static void d(String format, Object... args) {
         if (Slark.DEBUG){
             Log.d(TAG, buildMessage(format, args));

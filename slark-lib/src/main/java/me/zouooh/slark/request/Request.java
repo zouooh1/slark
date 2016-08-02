@@ -257,7 +257,7 @@ public abstract class Request implements RequestConfig {
         RequestAspect requestAspect = getRequestAspect();
 
         if (requestAspect!=null){
-            requestAspect.aftereOnBack(this);
+            requestAspect.beforeOnBack(this);
         }
 
         try {
@@ -268,7 +268,7 @@ public abstract class Request implements RequestConfig {
         }
 
         if (requestAspect!=null){
-            requestAspect.aftereOnBack(this);
+            requestAspect.afterOnBack(this);
         }
 
         Network network = getNetwork();
@@ -298,6 +298,10 @@ public abstract class Request implements RequestConfig {
                 }
             }
             if (networkResponse != null) {
+                RequestAspect requestAspect = getRequestAspect();
+                if (requestAspect!=null){
+                    requestAspect.aspect(this,networkResponse);
+                }
                 networkResponse = adpter(networkResponse);
             }
             if (networkResponse != null && cachework != null) {
