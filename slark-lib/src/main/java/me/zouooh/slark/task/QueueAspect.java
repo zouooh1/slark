@@ -7,4 +7,5 @@ import me.zouooh.slark.request.Request;
  */
 public interface QueueAspect {
     Request aspect(Request request);
+    void  handle(Request request,Throwable t);
 }

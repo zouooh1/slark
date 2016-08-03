@@ -120,4 +120,8 @@ public final class Slark {
             return "";
         return hosts.get(name);
     }
+
+    public static void host(String name,String host){
+        hosts.put(name,host);
+    }
 }

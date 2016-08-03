@@ -84,6 +84,9 @@ public class SlarkTask extends AsyncTask<String, Object, Object> implements Task
                 if (progress != null) {
                     progress.onRequestFailure(request, (Throwable) values[1]);
                 }
+                if (request.getQueue().queueAspect()!=null){
+                    request.getQueue().queueAspect().handle(request, (Throwable) values[1]);
+                }
                 break;
             case STATE_END:
                 if (progress != null) {

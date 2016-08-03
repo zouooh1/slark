@@ -105,6 +105,11 @@ public class SlarkQueue implements Queue {
         return request;
     }
 
+    @Override
+    public QueueAspect queueAspect() {
+        return aspect;
+    }
+
     public void executeRequest(Request request) {
         if (this.executorService == null || request == null) {
             return;

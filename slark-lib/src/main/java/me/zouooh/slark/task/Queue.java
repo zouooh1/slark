@@ -15,6 +15,7 @@ public interface Queue extends Task.TaskLisnter{
     RequestConfig get(String url);
     RequestConfig post(String url);
     Request fillRequest(Request request);
+    QueueAspect queueAspect();
     void destory(Request request);
     void submitRequest(Request request);
     void executeRequest(Request request);
