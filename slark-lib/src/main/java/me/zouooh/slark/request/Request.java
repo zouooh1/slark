@@ -392,7 +392,7 @@ public abstract class Request implements RequestConfig {
     }
 
     public boolean hasFile() {
-        return fileItems == null && fileItems.size() > 0;
+        return fileItems != null && fileItems.size() > 0;
     }
 
     public void sendData(DataOutputStream out) throws IOException {
