@@ -125,7 +125,7 @@ public abstract class Request implements RequestConfig {
         if (fileItems == null) {
             fileItems = new LinkedList<>();
         }
-        fileItems.add(new FormFileItem(filePath, filePath, type));
+        fileItems.add(new FormFileItem(name, filePath, type));
         return this;
     }
 
