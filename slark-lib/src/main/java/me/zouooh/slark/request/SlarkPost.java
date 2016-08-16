@@ -17,6 +17,14 @@ import me.zouooh.slark.http.HttpStatus;
  * Created by zouooh on 2016/7/26.
  */
 public class SlarkPost extends Request {
+    @Override
+    public String getBodyContentType() {
+        if (hasFile()){
+            return  "multipart/form-data; boundary=" + BOUNDARY;
+        }
+        return super.getBodyContentType();
+    }
+
     public SlarkPost(String url) {
         super(url);
         setMethod(Method.POST);
